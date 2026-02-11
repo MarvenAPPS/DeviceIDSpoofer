@@ -6,8 +6,8 @@ include $(THEOS)/makefiles/common.mk
 
 LIBRARY_NAME = DeviceIDSpoofer
 
-# Updated file list - removed FloatingWindow, added FloatingButton
-DeviceIDSpoofer_FILES = Tweak.x \
+# Use Tweak.m (pure Objective-C) instead of Tweak.x (Logos)
+DeviceIDSpoofer_FILES = Tweak.m \
 	DeviceIDManager.m \
 	FloatingButton.m \
 	UIManager.m
