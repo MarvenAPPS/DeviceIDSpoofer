@@ -6,7 +6,12 @@ include $(THEOS)/makefiles/common.mk
 
 LIBRARY_NAME = DeviceIDSpoofer
 
-DeviceIDSpoofer_FILES = Tweak.x FloatingWindow.m DeviceIDManager.m UIManager.m
+# Updated file list - removed FloatingWindow, added FloatingButton
+DeviceIDSpoofer_FILES = Tweak.x \
+	DeviceIDManager.m \
+	FloatingButton.m \
+	UIManager.m
+
 DeviceIDSpoofer_CFLAGS = -fobjc-arc
 DeviceIDSpoofer_FRAMEWORKS = UIKit Foundation CoreGraphics AdSupport
 DeviceIDSpoofer_INSTALL_PATH = /usr/lib
