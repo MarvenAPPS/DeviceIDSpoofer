@@ -51,24 +51,30 @@ static void showDebugToast(NSString *message) {
             return;
         }
         
-        // Create toast
-        UILabel *toast = [[UILabel alloc] initWithFrame:CGRectMake(20, 100, keyWindow.bounds.size.width - 40, 100)];
-        toast.backgroundColor = [UIColor colorWithRed:0.2 green:0.2 blue:0.2 alpha:0.95];
+        // Create toast - LARGER and MORE READABLE
+        UILabel *toast = [[UILabel alloc] initWithFrame:CGRectMake(20, 150, keyWindow.bounds.size.width - 40, 140)];
+        toast.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:0.95];
         toast.textColor = [UIColor whiteColor];
         toast.textAlignment = NSTextAlignmentCenter;
         toast.numberOfLines = 0;
-        toast.font = [UIFont systemFontOfSize:12];
-        toast.layer.cornerRadius = 12;
+        toast.font = [UIFont boldSystemFontOfSize:14]; // Larger font
+        toast.layer.cornerRadius = 15;
         toast.clipsToBounds = YES;
         toast.text = message;
         toast.alpha = 0;
         
+        // Add border for visibility
+        toast.layer.borderWidth = 2;
+        toast.layer.borderColor = [UIColor colorWithRed:0.2 green:0.6 blue:1.0 alpha:1.0].CGColor;
+        
         [keyWindow addSubview:toast];
         
+        // Fade in
         [UIView animateWithDuration:0.3 animations:^{
             toast.alpha = 1.0;
         } completion:^(BOOL finished) {
-            [UIView animateWithDuration:0.3 delay:2.0 options:0 animations:^{
+            // Stay for 5 seconds (was 2 seconds)
+            [UIView animateWithDuration:0.3 delay:5.0 options:0 animations:^{
                 toast.alpha = 0;
             } completion:^(BOOL finished) {
                 [toast removeFromSuperview];
@@ -104,7 +110,7 @@ static void swizzleMethod(Class cls, SEL originalSelector, SEL swizzledSelector)
     }
     
     NSLog(@"[DeviceIDSpoofer] ✅ Swizzled %@", NSStringFromSelector(originalSelector));
-    showDebugToast([NSString stringWithFormat:@"✅ Hook SUCCESS\n%@", NSStringFromSelector(originalSelector)]);
+    showDebugToast([NSString stringWithFormat:@"✅ HOOK INSTALLED\n\n%@\n\nTap floating button to\nswitch profiles", NSStringFromSelector(originalSelector)]);
 }
 
 // MARK: - UIDevice Category for IDFV Hook
@@ -133,10 +139,10 @@ static void swizzleMethod(Class cls, SEL originalSelector, SEL swizzledSelector)
               (long)manager.currentProfileIndex + 1,
               [manager getCurrentProfileName]);
         
-        // Show diagnostic toast
-        NSString *toastMsg = [NSString stringWithFormat:@"🔄 IDFV HOOKED!\n📱 Original: %@\n🎭 Spoofed: %@\n(Profile %ld: %@)",
-                             [original.UUIDString substringToIndex:8],
-                             [spoofedIDFV substringToIndex:8],
+        // Show diagnostic toast with FULL UUIDs
+        NSString *toastMsg = [NSString stringWithFormat:@"🔄 IDFV HOOKED!\n\n📱 Original:\n%@\n\n🎭 Spoofed:\n%@\n\nProfile %ld: %@",
+                             original.UUIDString,
+                             spoofedIDFV,
                              (long)manager.currentProfileIndex + 1,
                              [manager getCurrentProfileName]];
         showDebugToast(toastMsg);
@@ -148,8 +154,8 @@ static void swizzleMethod(Class cls, SEL originalSelector, SEL swizzledSelector)
     NSLog(@"[DeviceIDSpoofer] ➡️ IDFV ORIGINAL (hooking disabled): %@", original.UUIDString);
     
     // Show diagnostic toast
-    NSString *toastMsg = [NSString stringWithFormat:@"➡️ IDFV NOT HOOKED\n📱 Returned: %@\n(Spoofing disabled)",
-                         [original.UUIDString substringToIndex:8]];
+    NSString *toastMsg = [NSString stringWithFormat:@"➡️ IDFV NOT HOOKED\n\n📱 Original IDFV:\n%@\n\n(Spoofing is disabled)\n\nTap floating button to enable",
+                         original.UUIDString];
     showDebugToast(toastMsg);
     
     return original;
@@ -160,7 +166,7 @@ static void swizzleMethod(Class cls, SEL originalSelector, SEL swizzledSelector)
 // MARK: - Test Function
 
 static void testHook() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         NSLog(@"[DeviceIDSpoofer] 🧪 Testing hook by calling [UIDevice identifierForVendor]...");
         NSUUID *testIDFV = [[UIDevice currentDevice] identifierForVendor];
         NSLog(@"[DeviceIDSpoofer] 🧪 Test result: %@", testIDFV.UUIDString);
@@ -176,7 +182,7 @@ static void initialize() {
         NSLog(@"[DeviceIDSpoofer] 🔧 Process: %@", [[NSProcessInfo processInfo] processName]);
         NSLog(@"[DeviceIDSpoofer] 🔧 Bundle ID: %@", [[NSBundle mainBundle] bundleIdentifier]);
         
-        showDebugToast(@"📦 DeviceIDSpoofer\nInitializing...");
+        showDebugToast(@"📦 DeviceIDSpoofer\n\nInitializing...\n\nPlease wait");
         
         // Initialize manager
         DeviceIDManager *manager = [DeviceIDManager sharedManager];
@@ -192,11 +198,11 @@ static void initialize() {
         
         hookingInitialized = YES;
         
-        // Test the hook
+        // Test the hook after 4 seconds (was 3)
         testHook();
         
         // Show floating button after a delay
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             floatingButton = [[FloatingButton alloc] initWithDeviceIDManager:manager];
             [floatingButton show];
             NSLog(@"[DeviceIDSpoofer] ✅ Floating button initialized and shown");
