@@ -20,16 +20,13 @@
         _deviceIDManager = manager;
         _uiManager = [[UIManager alloc] initWithDeviceIDManager:manager];
         
-        // CRITICAL: Window configuration for proper touch handling
+        // Window configuration
         self.windowLevel = UIWindowLevelAlert + 100;
         self.backgroundColor = [UIColor clearColor];
-        self.userInteractionEnabled = YES; // Enable touches
-        self.opaque = NO; // Transparent background
         
-        // Root view controller with transparent view
+        // Root view controller
         UIViewController *rootVC = [[UIViewController alloc] init];
         rootVC.view.backgroundColor = [UIColor clearColor];
-        rootVC.view.userInteractionEnabled = YES;
         self.rootViewController = rootVC;
         
         [self setupFloatingButton];
@@ -50,9 +47,6 @@
         buttonSize
     );
     
-    // CRITICAL: Enable interaction on button
-    self.floatingButton.userInteractionEnabled = YES;
-    
     // Style the button
     self.floatingButton.backgroundColor = [UIColor colorWithRed:0.2 green:0.6 blue:1.0 alpha:0.9];
     self.floatingButton.layer.cornerRadius = buttonSize / 2;
@@ -62,21 +56,13 @@
     self.floatingButton.layer.shadowOpacity = 0.3;
     
     // Add icon
-    UIImageView *iconView = [[UIImageView alloc] initWithFrame:CGRectMake(15, 15, 30, 30)];
-    iconView.contentMode = UIViewContentModeScaleAspectFit;
-    iconView.tintColor = [UIColor whiteColor];
-    iconView.userInteractionEnabled = NO; // Don't block touches
-    
-    // Create a simple "ID" icon using a label
-    UILabel *iconLabel = [[UILabel alloc] initWithFrame:iconView.bounds];
+    UILabel *iconLabel = [[UILabel alloc] initWithFrame:self.floatingButton.bounds];
     iconLabel.text = @"ID";
     iconLabel.textColor = [UIColor whiteColor];
     iconLabel.font = [UIFont boldSystemFontOfSize:18];
     iconLabel.textAlignment = NSTextAlignmentCenter;
-    iconLabel.userInteractionEnabled = NO; // Don't block touches
-    [iconView addSubview:iconLabel];
-    
-    [self.floatingButton addSubview:iconView];
+    iconLabel.userInteractionEnabled = NO;
+    [self.floatingButton addSubview:iconLabel];
     
     // Add tap gesture
     [self.floatingButton addTarget:self action:@selector(floatingButtonTapped) forControlEvents:UIControlEventTouchUpInside];
@@ -88,11 +74,11 @@
     
     [self.rootViewController.view addSubview:self.floatingButton];
     
-    NSLog(@"[FloatingWindow] Button created at: %@", NSStringFromCGRect(self.floatingButton.frame));
+    NSLog(@"[FloatingWindow] Button setup complete at: %@", NSStringFromCGRect(self.floatingButton.frame));
 }
 
 - (void)handlePan:(UIPanGestureRecognizer *)gesture {
-    CGPoint translation = [gesture translationInView:self];
+    CGPoint translation = [gesture translationInView:self.rootViewController.view];
     
     if (gesture.state == UIGestureRecognizerStateBegan) {
         self.lastTouchPoint = self.floatingButton.center;
@@ -110,8 +96,7 @@
         
         self.floatingButton.center = newCenter;
     } else if (gesture.state == UIGestureRecognizerStateEnded) {
-        NSLog(@"[FloatingWindow] Pan ended, snapping to edge");
-        // Snap to nearest edge
+        NSLog(@"[FloatingWindow] Pan ended");
         [self snapToNearestEdge];
     }
 }
@@ -132,13 +117,29 @@
 }
 
 - (void)floatingButtonTapped {
-    NSLog(@"[FloatingWindow] Button tapped!");
+    NSLog(@"[FloatingWindow] ✅ Button tapped!");
+    
+    // Haptic feedback
+    UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+    [feedback impactOccurred];
+    
+    // Animate tap
+    [UIView animateWithDuration:0.1 animations:^{
+        self.floatingButton.transform = CGAffineTransformMakeScale(0.9, 0.9);
+    } completion:^(BOOL finished) {
+        [UIView animateWithDuration:0.1 animations:^{
+            self.floatingButton.transform = CGAffineTransformIdentity;
+        }];
+    }];
+    
     [self.uiManager showMenuFromWindow:self];
 }
 
 - (void)show {
     self.hidden = NO;
-    [self makeKeyAndVisible]; // CRITICAL: Make window visible and active
+    
+    // Make window visible and key (important for touch events)
+    [self makeKeyAndVisible];
     
     // Animate button appearance
     self.floatingButton.transform = CGAffineTransformMakeScale(0.1, 0.1);
@@ -148,7 +149,7 @@
         self.floatingButton.transform = CGAffineTransformIdentity;
         self.floatingButton.alpha = 1.0;
     } completion:^(BOOL finished) {
-        NSLog(@"[FloatingWindow] Button shown and ready");
+        NSLog(@"[FloatingWindow] Window shown and ready for touches");
     }];
 }
 
@@ -160,26 +161,32 @@
     }];
 }
 
-// CRITICAL: Hit test override to only capture touches on button
+#pragma mark - Touch Handling (CRITICAL)
+
+// This is the KEY method - it determines what receives touches
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    // Convert point to root view controller's view coordinate space
-    CGPoint buttonPoint = [self.rootViewController.view convertPoint:point fromView:self];
-    
-    // Check if touch is within button bounds
-    if (CGRectContainsPoint(self.floatingButton.frame, buttonPoint)) {
-        NSLog(@"[FloatingWindow] Hit test: Touch on button");
-        return [self.floatingButton hitTest:[self.floatingButton convertPoint:point fromView:self] withEvent:event];
+    // If window is hidden or interaction disabled, pass through
+    if (self.hidden || !self.userInteractionEnabled) {
+        return nil;
     }
     
-    // Let touches pass through to app behind
+    // Check if touch is within button's frame
+    CGPoint pointInButton = [self.floatingButton convertPoint:point fromView:self];
+    
+    if ([self.floatingButton pointInside:pointInButton withEvent:event]) {
+        NSLog(@"[FloatingWindow] ✅ Touch detected on button at: %@", NSStringFromCGPoint(point));
+        // Return the button - it will handle the touch
+        return self.floatingButton;
+    }
+    
+    // Touch is outside button - pass through to app behind
+    NSLog(@"[FloatingWindow] Touch passed through at: %@", NSStringFromCGPoint(point));
     return nil;
 }
 
-// Deprecated method - keep for compatibility
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    // Only respond to touches on the floating button
-    CGPoint buttonPoint = [self.rootViewController.view convertPoint:point fromView:self];
-    return CGRectContainsPoint(self.floatingButton.frame, buttonPoint);
+// Gesture recognizer delegate - allow simultaneous recognition
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return NO; // Don't allow simultaneous - button should capture exclusively
 }
 
 @end
