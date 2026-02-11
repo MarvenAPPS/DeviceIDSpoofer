@@ -1,164 +1,180 @@
 #import "DeviceIDManager.h"
-#import <UIKit/UIKit.h>
+
+static NSString *const kEnabledKey = @"DeviceIDSpoofingEnabled";
+static NSString *const kCurrentProfileKey = @"CurrentProfileIndex";
+
+// 10 Predefined IDFV profiles
+static NSDictionary *profiles = nil;
+
+@interface DeviceIDManager ()
+@property (nonatomic, strong) NSMutableDictionary *customValues;
+@property (nonatomic, strong) NSDictionary *originalValues;
+@end
 
 @implementation DeviceIDManager
+
++ (instancetype)sharedManager {
+    static DeviceIDManager *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _isEnabled = NO;
-        _advertisingTrackingEnabled = YES;
+        // Initialize 10 predefined profiles
+        profiles = @{
+            @"Profile 1: Gaming": @"12345678-AAAA-BBBB-CCCC-111111111111",
+            @"Profile 2: Social": @"87654321-BBBB-CCCC-DDDD-222222222222",
+            @"Profile 3: Finance": @"ABCDEFAB-CCCC-DDDD-EEEE-333333333333",
+            @"Profile 4: Shopping": @"FEDCBAFE-DDDD-EEEE-FFFF-444444444444",
+            @"Profile 5: Media": @"11111111-EEEE-FFFF-0000-555555555555",
+            @"Profile 6: Work": @"22222222-FFFF-0000-1111-666666666666",
+            @"Profile 7: Testing": @"33333333-0000-1111-2222-777777777777",
+            @"Profile 8: Privacy": @"44444444-1111-2222-3333-888888888888",
+            @"Profile 9: Development": @"55555555-2222-3333-4444-999999999999",
+            @"Profile 10: Default": @"66666666-3333-4444-5555-AAAAAAAAAAAA"
+        };
+        
+        _customValues = [NSMutableDictionary dictionary];
+        _originalValues = @{};
+        
+        [self loadSettings];
     }
     return self;
 }
 
-- (void)generateRandomIDs {
-    // Generate random UUID-based identifiers
-    self.customIDFV = [[NSUUID UUID] UUIDString];
-    self.customIDFA = [[NSUUID UUID] UUIDString];
-    self.customUDID = [[NSUUID UUID] UUIDString].uppercaseString;
+#pragma mark - Profile Management
+
+- (void)switchToNextProfile {
+    // Cycle: -1 (disabled) -> 0 -> 1 -> ... -> 9 -> -1 (disabled)
+    _currentProfileIndex++;
     
-    // Generate random serial number (12 characters)
-    self.customSerialNumber = [self randomSerialNumber];
-    
-    // Generate random MAC addresses
-    self.customWiFiMAC = [self randomMACAddress];
-    self.customBluetoothMAC = [self randomMACAddress];
-    
-    // Generate random device info
-    NSArray *models = @[@"iPhone12,1", @"iPhone13,2", @"iPhone14,2", @"iPhone14,3", @"iPhone15,2"];
-    self.customProductType = models[arc4random_uniform((uint32_t)models.count)];
-    
-    NSArray *versions = @[@"15.0", @"15.5", @"16.0", @"16.5", @"17.0"];
-    self.customSystemVersion = versions[arc4random_uniform((uint32_t)versions.count)];
-    
-    self.customDeviceName = [NSString stringWithFormat:@"iPhone-%@", [self randomString:4]];
-    self.customModel = @"iPhone";
-    self.customRegionInfo = @"US/A";
+    if (_currentProfileIndex >= 10) {
+        // After profile 9, go back to disabled
+        _currentProfileIndex = -1;
+        _isEnabled = NO;
+        NSLog(@"[DeviceIDManager] 🔴 Profile cycling complete - DISABLED");
+    } else {
+        // Enable spoofing with new profile
+        _isEnabled = YES;
+        NSLog(@"[DeviceIDManager] 🟢 Switched to profile %ld: %@ -> %@", 
+              (long)_currentProfileIndex, 
+              [self getCurrentProfileName],
+              [self getCurrentProfileIDFV]);
+    }
     
     [self saveSettings];
 }
 
-- (NSString *)randomSerialNumber {
-    NSString *chars = @"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    NSMutableString *serial = [NSMutableString string];
-    for (int i = 0; i < 12; i++) {
-        uint32_t index = arc4random_uniform((uint32_t)chars.length);
-        [serial appendFormat:@"%C", [chars characterAtIndex:index]];
+- (NSString *)getCurrentProfileName {
+    if (_currentProfileIndex < 0 || _currentProfileIndex >= 10) {
+        return @"Disabled";
     }
-    return serial;
+    
+    NSArray *profileNames = @[
+        @"Profile 1: Gaming",
+        @"Profile 2: Social",
+        @"Profile 3: Finance",
+        @"Profile 4: Shopping",
+        @"Profile 5: Media",
+        @"Profile 6: Work",
+        @"Profile 7: Testing",
+        @"Profile 8: Privacy",
+        @"Profile 9: Development",
+        @"Profile 10: Default"
+    ];
+    
+    return profileNames[_currentProfileIndex];
 }
 
-- (NSString *)randomMACAddress {
-    return [NSString stringWithFormat:@"%02X:%02X:%02X:%02X:%02X:%02X",
-            arc4random_uniform(256),
-            arc4random_uniform(256),
-            arc4random_uniform(256),
-            arc4random_uniform(256),
-            arc4random_uniform(256),
-            arc4random_uniform(256)];
-}
-
-- (NSString *)randomString:(NSInteger)length {
-    NSString *chars = @"abcdefghijklmnopqrstuvwxyz0123456789";
-    NSMutableString *result = [NSMutableString string];
-    for (int i = 0; i < length; i++) {
-        uint32_t index = arc4random_uniform((uint32_t)chars.length);
-        [result appendFormat:@"%C", [chars characterAtIndex:index]];
+- (NSString *)getCurrentProfileIDFV {
+    if (_currentProfileIndex < 0 || _currentProfileIndex >= 10) {
+        return @"Original IDFV";
     }
-    return result;
+    
+    NSString *profileName = [self getCurrentProfileName];
+    return profiles[profileName];
 }
 
-- (void)resetToOriginal {
-    self.customIDFV = nil;
-    self.customIDFA = nil;
-    self.customUDID = nil;
-    self.customSerialNumber = nil;
-    self.customWiFiMAC = nil;
-    self.customBluetoothMAC = nil;
-    self.customDeviceName = nil;
-    self.customModel = nil;
-    self.customProductType = nil;
-    self.customSystemVersion = nil;
-    self.customRegionInfo = nil;
-    self.isEnabled = NO;
-    [self saveSettings];
-}
+#pragma mark - Settings
 
 - (void)saveSettings {
-    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
-    settings[@"isEnabled"] = @(self.isEnabled);
-    settings[@"advertisingTrackingEnabled"] = @(self.advertisingTrackingEnabled);
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:_isEnabled forKey:kEnabledKey];
+    [defaults setInteger:_currentProfileIndex forKey:kCurrentProfileKey];
+    [defaults synchronize];
     
-    if (self.customIDFV) settings[@"customIDFV"] = self.customIDFV;
-    if (self.customIDFA) settings[@"customIDFA"] = self.customIDFA;
-    if (self.customUDID) settings[@"customUDID"] = self.customUDID;
-    if (self.customSerialNumber) settings[@"customSerialNumber"] = self.customSerialNumber;
-    if (self.customWiFiMAC) settings[@"customWiFiMAC"] = self.customWiFiMAC;
-    if (self.customBluetoothMAC) settings[@"customBluetoothMAC"] = self.customBluetoothMAC;
-    if (self.customDeviceName) settings[@"customDeviceName"] = self.customDeviceName;
-    if (self.customModel) settings[@"customModel"] = self.customModel;
-    if (self.customProductType) settings[@"customProductType"] = self.customProductType;
-    if (self.customSystemVersion) settings[@"customSystemVersion"] = self.customSystemVersion;
-    if (self.customRegionInfo) settings[@"customRegionInfo"] = self.customRegionInfo;
-    
-    NSString *path = @"/var/mobile/Library/Preferences/com.marvenapps.deviceidspoofer.plist";
-    [settings writeToFile:path atomically:YES];
+    NSLog(@"[DeviceIDManager] 💾 Settings saved - Profile: %ld, Enabled: %@", 
+          (long)_currentProfileIndex, _isEnabled ? @"YES" : @"NO");
 }
 
 - (void)loadSettings {
-    NSString *path = @"/var/mobile/Library/Preferences/com.marvenapps.deviceidspoofer.plist";
-    NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:path];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    _isEnabled = [defaults boolForKey:kEnabledKey];
+    _currentProfileIndex = [defaults integerForKey:kCurrentProfileKey];
     
-    if (settings) {
-        self.isEnabled = [settings[@"isEnabled"] boolValue];
-        self.advertisingTrackingEnabled = [settings[@"advertisingTrackingEnabled"] boolValue];
-        self.customIDFV = settings[@"customIDFV"];
-        self.customIDFA = settings[@"customIDFA"];
-        self.customUDID = settings[@"customUDID"];
-        self.customSerialNumber = settings[@"customSerialNumber"];
-        self.customWiFiMAC = settings[@"customWiFiMAC"];
-        self.customBluetoothMAC = settings[@"customBluetoothMAC"];
-        self.customDeviceName = settings[@"customDeviceName"];
-        self.customModel = settings[@"customModel"];
-        self.customProductType = settings[@"customProductType"];
-        self.customSystemVersion = settings[@"customSystemVersion"];
-        self.customRegionInfo = settings[@"customRegionInfo"];
+    // If never set, default to disabled (-1)
+    if (![defaults objectForKey:kCurrentProfileKey]) {
+        _currentProfileIndex = -1;
+        _isEnabled = NO;
     }
+    
+    NSLog(@"[DeviceIDManager] 📂 Settings loaded - Profile: %ld, Enabled: %@", 
+          (long)_currentProfileIndex, _isEnabled ? @"YES" : @"NO");
+}
+
+#pragma mark - Legacy Methods (for UI)
+
+- (void)generateRandomIDs {
+    // Generate random UUIDs
+    NSUUID *uuid = [NSUUID UUID];
+    [_customValues setObject:uuid.UUIDString forKey:@"IDFV"];
+    [_customValues setObject:[NSUUID UUID].UUIDString forKey:@"IDFA"];
+    [_customValues setObject:[NSUUID UUID].UUIDString forKey:@"UDID"];
+    
+    NSLog(@"[DeviceIDManager] Random IDs generated");
+}
+
+- (void)resetToOriginal {
+    [_customValues removeAllObjects];
+    _isEnabled = NO;
+    _currentProfileIndex = -1;
+    [self saveSettings];
+    NSLog(@"[DeviceIDManager] Reset to original values");
 }
 
 - (NSDictionary *)getCurrentValues {
-    UIDevice *device = [UIDevice currentDevice];
+    NSMutableDictionary *values = [NSMutableDictionary dictionary];
     
-    return @{
-        @"IDFV": self.customIDFV ?: ([device respondsToSelector:@selector(identifierForVendor)] ? [[device identifierForVendor] UUIDString] : @"N/A"),
-        @"IDFA": self.customIDFA ?: @"N/A",
-        @"UDID": self.customUDID ?: @"N/A",
-        @"Serial Number": self.customSerialNumber ?: @"N/A",
-        @"WiFi MAC": self.customWiFiMAC ?: @"N/A",
-        @"Bluetooth MAC": self.customBluetoothMAC ?: @"N/A",
-        @"Device Name": self.customDeviceName ?: device.name,
-        @"Model": self.customModel ?: device.model,
-        @"Product Type": self.customProductType ?: @"N/A",
-        @"System Version": self.customSystemVersion ?: device.systemVersion,
-        @"Region Info": self.customRegionInfo ?: @"N/A"
-    };
+    // Show current profile IDFV if active
+    if (_isEnabled && _currentProfileIndex >= 0 && _currentProfileIndex < 10) {
+        values[@"IDFV"] = [self getCurrentProfileIDFV];
+    } else {
+        values[@"IDFV"] = @"Original IDFV";
+    }
+    
+    // Placeholder for other values
+    values[@"IDFA"] = _customValues[@"IDFA"] ?: @"Original IDFA";
+    values[@"UDID"] = _customValues[@"UDID"] ?: @"Original UDID";
+    values[@"Serial Number"] = @"C02XYZ123ABC";
+    values[@"WiFi MAC"] = @"00:11:22:33:44:55";
+    values[@"Bluetooth MAC"] = @"AA:BB:CC:DD:EE:FF";
+    values[@"Device Name"] = @"iPhone";
+    values[@"Model"] = @"iPhone14,2";
+    values[@"Product Type"] = @"iPhone14,2";
+    values[@"System Version"] = @"17.0";
+    values[@"Region Info"] = @"US";
+    
+    return values;
 }
 
 - (void)setCustomValue:(NSString *)value forKey:(NSString *)key {
-    if ([key isEqualToString:@"IDFV"]) self.customIDFV = value;
-    else if ([key isEqualToString:@"IDFA"]) self.customIDFA = value;
-    else if ([key isEqualToString:@"UDID"]) self.customUDID = value;
-    else if ([key isEqualToString:@"Serial Number"]) self.customSerialNumber = value;
-    else if ([key isEqualToString:@"WiFi MAC"]) self.customWiFiMAC = value;
-    else if ([key isEqualToString:@"Bluetooth MAC"]) self.customBluetoothMAC = value;
-    else if ([key isEqualToString:@"Device Name"]) self.customDeviceName = value;
-    else if ([key isEqualToString:@"Model"]) self.customModel = value;
-    else if ([key isEqualToString:@"Product Type"]) self.customProductType = value;
-    else if ([key isEqualToString:@"System Version"]) self.customSystemVersion = value;
-    else if ([key isEqualToString:@"Region Info"]) self.customRegionInfo = value;
-    
-    [self saveSettings];
+    [_customValues setObject:value forKey:key];
+    NSLog(@"[DeviceIDManager] Custom value set: %@ = %@", key, value);
 }
 
 @end
