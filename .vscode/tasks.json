@@ -4,7 +4,7 @@
         {
             "label": "🔨 Build: LiveContainer Dylib",
             "type": "shell",
-            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '✅ Build complete!' && echo '📁 Dylib location: .theos/obj/arm64/libDeviceIDSpoofer.dylib' && echo '📁 Universal dylib: .theos/obj/debug/libDeviceIDSpoofer.dylib' && ls -lh .theos/obj/arm64/libDeviceIDSpoofer.dylib .theos/obj/arm64e/libDeviceIDSpoofer.dylib 2>/dev/null || true",
+            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '✅ Build complete!' && echo '📁 arm64: .theos/obj/arm64/libDeviceIDSpoofer.dylib' && echo '📁 arm64e: .theos/obj/arm64e/libDeviceIDSpoofer.dylib' && ls -lh .theos/obj/arm64/libDeviceIDSpoofer.dylib .theos/obj/arm64e/libDeviceIDSpoofer.dylib 2>/dev/null || true",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -93,7 +93,7 @@
         {
             "label": "🎯 Build All: Dylib + Tweak",
             "type": "shell",
-            "command": "echo '🔨 Building LiveContainer Dylib...' && make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '📦 Building Jailbreak Tweak...' && make clean package && echo '' && echo '📦 Copying to output folder...' && mkdir -p output && lipo -create .theos/obj/arm64/libDeviceIDSpoofer.dylib .theos/obj/arm64e/libDeviceIDSpoofer.dylib -output output/libDeviceIDSpoofer.dylib && strip -x output/libDeviceIDSpoofer.dylib && cp .theos/obj/arm64/libDeviceIDSpoofer.dylib output/libDeviceIDSpoofer-arm64.dylib && cp .theos/obj/arm64e/libDeviceIDSpoofer.dylib output/libDeviceIDSpoofer-arm64e.dylib && cp packages/*.deb output/ && echo '✅ All builds complete! Files in output/' && echo '' && ls -lh output/",
+            "command": "echo '🔨 Step 1/4: Building LiveContainer Dylib...' && make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '📦 Step 2/4: Copying dylib to output...' && mkdir -p output && cp .theos/obj/arm64/libDeviceIDSpoofer.dylib output/libDeviceIDSpoofer-arm64.dylib && cp .theos/obj/arm64e/libDeviceIDSpoofer.dylib output/libDeviceIDSpoofer-arm64e.dylib && lipo -create .theos/obj/arm64/libDeviceIDSpoofer.dylib .theos/obj/arm64e/libDeviceIDSpoofer.dylib -output output/libDeviceIDSpoofer.dylib && strip -x output/libDeviceIDSpoofer.dylib && echo '✅ Dylib copied!' && echo '' && echo '🔨 Step 3/4: Building Jailbreak Tweak...' && make clean package && echo '' && echo '📦 Step 4/4: Copying .deb package...' && cp packages/*.deb output/ && echo '' && echo '✅ All builds complete! Files in output/' && echo '' && ls -lh output/",
             "group": "build",
             "presentation": {
                 "reveal": "always",
