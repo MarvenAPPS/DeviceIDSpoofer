@@ -8,6 +8,5 @@ TWEAK_NAME = DeviceIDSpoofer
 DeviceIDSpoofer_FILES = Tweak.x FloatingWindow.m DeviceIDManager.m UIManager.m
 DeviceIDSpoofer_CFLAGS = -fobjc-arc
 DeviceIDSpoofer_FRAMEWORKS = UIKit Foundation CoreGraphics
-DeviceIDSpoofer_PRIVATE_FRAMEWORKS = MobileGestalt
 
 include $(THEOS_MAKE_PATH)/tweak.mk
