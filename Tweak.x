@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <dlfcn.h>
 #import "DeviceIDManager.h"
 #import "FloatingWindow.h"
 #import "UIManager.h"
