@@ -1,0 +1,9 @@
+Package: com.marvenapps.deviceidspoofer
+Name: DeviceIDSpoofer
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Injectable dylib with floating UI to hook and spoof all device unique identifiers
+Maintainer: MarvenAPPS
+Author: MarvenAPPS
+Section: Tweaks
+Depends: mobilesubstrate, preferenceloader
