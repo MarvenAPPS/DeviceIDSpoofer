@@ -2,6 +2,7 @@
 #import <UIKit/UIKit.h>
 #import <dlfcn.h>
 #import <objc/runtime.h>
+#import <AdSupport/AdSupport.h>
 #import "DeviceIDManager.h"
 #import "FloatingWindow.h"
 #import "UIManager.h"
@@ -180,12 +181,9 @@ static void initialize() {
         swizzleMethod([UIDevice class], @selector(systemVersion), @selector(swizzled_systemVersion));
         
         // Swizzle ASIdentifierManager methods
-        Class asIdentifierClass = NSClassFromString(@"ASIdentifierManager");
-        if (asIdentifierClass) {
-            swizzleMethod(asIdentifierClass, @selector(advertisingIdentifier), @selector(swizzled_advertisingIdentifier));
-            swizzleMethod(asIdentifierClass, @selector(isAdvertisingTrackingEnabled), @selector(swizzled_isAdvertisingTrackingEnabled));
-            NSLog(@"[DeviceIDSpoofer] ASIdentifierManager hooks installed");
-        }
+        swizzleMethod([ASIdentifierManager class], @selector(advertisingIdentifier), @selector(swizzled_advertisingIdentifier));
+        swizzleMethod([ASIdentifierManager class], @selector(isAdvertisingTrackingEnabled), @selector(swizzled_isAdvertisingTrackingEnabled));
+        NSLog(@"[DeviceIDSpoofer] ASIdentifierManager hooks installed");
         
         // Attempt MobileGestalt hook (limited in LiveContainer)
         hookMobileGestalt();
