@@ -29,9 +29,6 @@
     
     NSLog(@"[FloatingButton] 🟢 Creating floating window...");
     
-    // Get main screen
-    UIScreen *mainScreen = [UIScreen mainScreen];
-    
     // Create window ABOVE everything
     self.floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(20, 100, 80, 80)];
     self.floatingWindow.windowLevel = UIWindowLevelAlert + 100;
@@ -141,17 +138,54 @@
     CGRect screenBounds = [UIScreen mainScreen].bounds;
     toast.center = CGPointMake(screenBounds.size.width / 2, screenBounds.size.height / 2);
     
-    // Add to a visible window
+    // Get key window - iOS 15+ compatible way
     UIWindow *keyWindow = nil;
-    for (UIWindow *window in [UIApplication sharedApplication].windows) {
-        if (window.isKeyWindow) {
-            keyWindow = window;
-            break;
+    
+    if (@available(iOS 15.0, *)) {
+        // Modern approach for iOS 15+
+        NSSet<UIScene *> *connectedScenes = [UIApplication sharedApplication].connectedScenes;
+        for (UIScene *scene in connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *windowScene = (UIWindowScene *)scene;
+                for (UIWindow *window in windowScene.windows) {
+                    if (window.isKeyWindow) {
+                        keyWindow = window;
+                        break;
+                    }
+                }
+                if (keyWindow) break;
+            }
         }
+        
+        // Fallback: get first window
+        if (!keyWindow) {
+            for (UIScene *scene in connectedScenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]]) {
+                    UIWindowScene *windowScene = (UIWindowScene *)scene;
+                    keyWindow = windowScene.windows.firstObject;
+                    if (keyWindow) break;
+                }
+            }
+        }
+    } else {
+        // Legacy approach for iOS 14 and below
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        for (UIWindow *window in [UIApplication sharedApplication].windows) {
+            if (window.isKeyWindow) {
+                keyWindow = window;
+                break;
+            }
+        }
+        if (!keyWindow) {
+            keyWindow = [UIApplication sharedApplication].windows.firstObject;
+        }
+        #pragma clang diagnostic pop
     }
     
     if (!keyWindow) {
-        keyWindow = [UIApplication sharedApplication].windows.firstObject;
+        NSLog(@"[FloatingButton] ⚠️ No key window found for toast");
+        return;
     }
     
     toast.alpha = 0;
