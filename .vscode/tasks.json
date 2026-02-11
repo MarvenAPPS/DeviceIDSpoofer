@@ -4,7 +4,7 @@
         {
             "label": "🔨 Build: LiveContainer Dylib",
             "type": "shell",
-            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '✅ Build complete!' && echo '' && echo '📦 Searching for all dylib files...' && find .theos -name '*.dylib' -type f -exec ls -lh {} \;",
+            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '✅ Build complete!' && echo '' && echo '📁 Universal binary:' && ls -lh .theos/obj/DeviceIDSpoofer.dylib && echo '' && echo '📁 arm64:' && ls -lh .theos/obj/arm64/DeviceIDSpoofer.dylib && echo '' && echo '📁 arm64e:' && ls -lh .theos/obj/arm64e/DeviceIDSpoofer.dylib && echo '' && lipo -info .theos/obj/DeviceIDSpoofer.dylib",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -35,7 +35,7 @@
         {
             "label": "🚀 Build & Copy: LiveContainer (Output)",
             "type": "shell",
-            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && mkdir -p output && echo '' && echo '📦 Finding and copying all dylib files...' && find .theos/obj -name 'libDeviceIDSpoofer.dylib' -type f -exec cp {} output/ \; && find .theos/obj -name 'libDeviceIDSpoofer.dylib' -path '*/arm64/*' -exec cp {} output/libDeviceIDSpoofer-arm64.dylib \; && find .theos/obj -name 'libDeviceIDSpoofer.dylib' -path '*/arm64e/*' -exec cp {} output/libDeviceIDSpoofer-arm64e.dylib \; && strip -x output/libDeviceIDSpoofer.dylib 2>/dev/null || true && echo '✅ Files copied!' && echo '' && ls -lh output/ && echo '' && echo '🔍 Architecture info:' && file output/*.dylib",
+            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && mkdir -p output && echo '' && echo '📦 Copying files to output/...' && cp .theos/obj/DeviceIDSpoofer.dylib output/DeviceIDSpoofer.dylib && cp .theos/obj/arm64/DeviceIDSpoofer.dylib output/DeviceIDSpoofer-arm64.dylib && cp .theos/obj/arm64e/DeviceIDSpoofer.dylib output/DeviceIDSpoofer-arm64e.dylib && strip -x output/DeviceIDSpoofer.dylib && echo '✅ Files copied and stripped!' && echo '' && ls -lh output/ && echo '' && echo '🔍 Architecture info:' && lipo -info output/DeviceIDSpoofer*.dylib",
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -73,7 +73,7 @@
         {
             "label": "🔍 Info: Find All Dylibs",
             "type": "shell",
-            "command": "echo '🔍 Searching for all dylib files in .theos/...' && echo '' && find .theos -name '*.dylib' -type f -exec sh -c 'echo \"📁 {}\" && ls -lh {} && file {} && echo \"\"' \; || echo '⚠️  No dylib files found. Build first!'",
+            "command": "echo '🔍 All dylib files in .theos/:' && echo '' && find .theos -name '*.dylib' -type f | grep -v dSYM | while read f; do echo \"📁 $f\"; ls -lh \"$f\"; lipo -info \"$f\" 2>/dev/null; echo \"\"; done || echo '⚠️  No dylib files found. Build first!'",
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -83,7 +83,7 @@
         {
             "label": "🔍 Info: Show Dylib Details",
             "type": "shell",
-            "command": "echo '📊 Dylib Information:' && echo '' && echo 'arm64:' && file .theos/obj/arm64/libDeviceIDSpoofer.dylib 2>/dev/null && ls -lh .theos/obj/arm64/libDeviceIDSpoofer.dylib 2>/dev/null && echo '' && echo 'arm64e:' && file .theos/obj/arm64e/libDeviceIDSpoofer.dylib 2>/dev/null && ls -lh .theos/obj/arm64e/libDeviceIDSpoofer.dylib 2>/dev/null && echo '' && echo 'Dependencies:' && otool -L .theos/obj/arm64/libDeviceIDSpoofer.dylib 2>/dev/null || echo '⚠️  Build the dylib first!'",
+            "command": "echo '📊 Dylib Information:' && echo '' && echo 'Universal Binary:' && ls -lh .theos/obj/DeviceIDSpoofer.dylib 2>/dev/null && lipo -info .theos/obj/DeviceIDSpoofer.dylib 2>/dev/null && echo '' && echo 'arm64:' && ls -lh .theos/obj/arm64/DeviceIDSpoofer.dylib 2>/dev/null && file .theos/obj/arm64/DeviceIDSpoofer.dylib 2>/dev/null && echo '' && echo 'arm64e:' && ls -lh .theos/obj/arm64e/DeviceIDSpoofer.dylib 2>/dev/null && file .theos/obj/arm64e/DeviceIDSpoofer.dylib 2>/dev/null && echo '' && echo 'Dependencies:' && otool -L .theos/obj/DeviceIDSpoofer.dylib 2>/dev/null || echo '⚠️  Build the dylib first!'",
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -93,7 +93,7 @@
         {
             "label": "📤 Deploy: Copy to Device (SSH)",
             "type": "shell",
-            "command": "echo 'Enter device IP:' && read DEVICE_IP && scp .theos/obj/arm64/libDeviceIDSpoofer.dylib root@$DEVICE_IP:/var/root/ && echo '✅ Dylib copied to device at /var/root/'",
+            "command": "echo 'Enter device IP:' && read DEVICE_IP && scp .theos/obj/DeviceIDSpoofer.dylib root@$DEVICE_IP:/var/root/ && echo '✅ Dylib copied to device at /var/root/'",
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -103,7 +103,7 @@
         {
             "label": "🎯 Build All: Dylib + Tweak",
             "type": "shell",
-            "command": "echo '🔨 Step 1/4: Building LiveContainer Dylib...' && make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '📦 Step 2/4: Finding and copying dylib files...' && mkdir -p output && find .theos/obj -name 'libDeviceIDSpoofer.dylib' -type f | while read f; do echo \"Found: $f\"; cp \"$f\" output/; done && find .theos/obj -name 'libDeviceIDSpoofer.dylib' -path '*/arm64/*' -exec cp {} output/libDeviceIDSpoofer-arm64.dylib \; && find .theos/obj -name 'libDeviceIDSpoofer.dylib' -path '*/arm64e/*' -exec cp {} output/libDeviceIDSpoofer-arm64e.dylib \; && strip -x output/libDeviceIDSpoofer.dylib 2>/dev/null || true && echo '✅ Dylib copied!' && echo '' && echo '🔨 Step 3/4: Building Jailbreak Tweak...' && make clean package && echo '' && echo '📦 Step 4/4: Copying .deb package...' && cp packages/*.deb output/ && echo '' && echo '✅ All builds complete! Files in output/' && echo '' && ls -lh output/ && echo '' && file output/*.dylib",
+            "command": "echo '🔨 Step 1/4: Building LiveContainer Dylib...' && make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '📦 Step 2/4: Copying dylib to output...' && mkdir -p output && cp .theos/obj/DeviceIDSpoofer.dylib output/DeviceIDSpoofer.dylib && cp .theos/obj/arm64/DeviceIDSpoofer.dylib output/DeviceIDSpoofer-arm64.dylib && cp .theos/obj/arm64e/DeviceIDSpoofer.dylib output/DeviceIDSpoofer-arm64e.dylib && strip -x output/DeviceIDSpoofer.dylib && echo '✅ Dylib copied!' && echo '' && echo '🔨 Step 3/4: Building Jailbreak Tweak...' && make clean package && echo '' && echo '📦 Step 4/4: Copying .deb package...' && cp packages/*.deb output/ && echo '' && echo '✅ All builds complete! Files in output/' && echo '' && ls -lh output/ && echo '' && lipo -info output/DeviceIDSpoofer*.dylib",
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -117,7 +117,7 @@
         {
             "label": "⚡ Quick Build: LiveContainer (No Clean)",
             "type": "shell",
-            "command": "make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && find .theos -name '*.dylib' -type f -exec ls -lh {} \;",
+            "command": "make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && ls -lh .theos/obj/DeviceIDSpoofer.dylib",
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -130,7 +130,7 @@
         {
             "label": "🔧 Debug: Build with Symbols",
             "type": "shell",
-            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer DEBUG=1 && echo '' && find .theos -name '*.dylib' -type f -exec ls -lh {} \;",
+            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer DEBUG=1 && echo '' && ls -lh .theos/obj/DeviceIDSpoofer.dylib && echo '' && ls -lh .theos/obj/arm64/DeviceIDSpoofer.dylib.dSYM",
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -154,7 +154,7 @@
         {
             "label": "📊 Analyze: Dylib Size Comparison",
             "type": "shell",
-            "command": "echo '📊 Size Analysis:' && echo '' && echo 'All dylib files found:' && find .theos -name '*.dylib' -type f -exec sh -c 'echo \"\" && echo \"📁 {}\" && ls -lh {} && lipo -info {} 2>/dev/null' \; && echo '' && echo 'Output folder:' && ls -lh output/*.dylib 2>/dev/null || echo 'No files in output/'",
+            "command": "echo '📊 Size Analysis:' && echo '' && echo 'Universal binary (.theos/obj):' && ls -lh .theos/obj/DeviceIDSpoofer.dylib 2>/dev/null && lipo -info .theos/obj/DeviceIDSpoofer.dylib 2>/dev/null && echo '' && echo 'arm64 only:' && ls -lh .theos/obj/arm64/DeviceIDSpoofer.dylib 2>/dev/null && echo '' && echo 'arm64e only:' && ls -lh .theos/obj/arm64e/DeviceIDSpoofer.dylib 2>/dev/null && echo '' && echo 'Stripped universal (output):' && ls -lh output/DeviceIDSpoofer.dylib 2>/dev/null && lipo -info output/DeviceIDSpoofer.dylib 2>/dev/null || echo '⚠️  Build first, then run Build & Copy task'",
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -164,7 +164,7 @@
         {
             "label": "🔐 Sign: Code Sign Dylib",
             "type": "shell",
-            "command": "find .theos/obj -name 'libDeviceIDSpoofer.dylib' -type f -exec sh -c 'echo \"Signing: {}\" && codesign -s - -f {}' \; && echo '✅ All dylibs signed'",
+            "command": "codesign -s - -f .theos/obj/DeviceIDSpoofer.dylib && echo '✅ Universal dylib signed' && codesign -dv .theos/obj/DeviceIDSpoofer.dylib",
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -204,7 +204,7 @@
         {
             "label": "🎬 Watch: Auto-rebuild on File Change",
             "type": "shell",
-            "command": "while true; do fswatch -1 *.x *.m *.h && echo '🔄 File changed, rebuilding...' && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '✅ Build complete at' && date; done",
+            "command": "while true; do fswatch -1 *.x *.m *.h && echo '🔄 File changed, rebuilding...' && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '✅ Build complete at' && date && ls -lh .theos/obj/DeviceIDSpoofer.dylib; done",
             "isBackground": true,
             "presentation": {
                 "reveal": "always",
