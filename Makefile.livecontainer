@@ -8,7 +8,7 @@ LIBRARY_NAME = DeviceIDSpoofer
 
 DeviceIDSpoofer_FILES = Tweak.x FloatingWindow.m DeviceIDManager.m UIManager.m
 DeviceIDSpoofer_CFLAGS = -fobjc-arc
-DeviceIDSpoofer_FRAMEWORKS = UIKit Foundation CoreGraphics
+DeviceIDSpoofer_FRAMEWORKS = UIKit Foundation CoreGraphics AdSupport
 DeviceIDSpoofer_INSTALL_PATH = /usr/lib
 DeviceIDSpoofer_LDFLAGS = -Wl,-not_for_dyld_shared_cache -Wl,-no_warn_inits
 
