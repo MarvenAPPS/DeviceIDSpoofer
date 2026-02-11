@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "🐛 LLDB: Attach to Process on Device",
+            "type": "lldb",
+            "request": "attach",
+            "program": "/Applications/YOUR_APP.app/YOUR_APP",
+            "pid": "${command:pickProcess}",
+            "stopOnEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "miDebuggerPath": "/usr/bin/lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for lldb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "🔨 Build: LiveContainer Dylib"
+        },
+        {
+            "name": "🔍 LLDB: Remote Debug via SSH",
+            "type": "lldb",
+            "request": "custom",
+            "targetCreateCommands": [
+                "target create ${workspaceFolder}/.theos/obj/debug/libDeviceIDSpoofer.dylib"
+            ],
+            "processCreateCommands": [
+                "platform select remote-ios",
+                "platform connect connect://DEVICE_IP:2222",
+                "process attach --name SpringBoard"
+            ]
+        }
+    ]
+}

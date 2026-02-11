@@ -1,0 +1,43 @@
+{
+    "files.associations": {
+        "*.x": "objective-c",
+        "*.xm": "objective-cpp"
+    },
+    "files.exclude": {
+        "**/.theos": true,
+        "**/packages": false,
+        "**/.DS_Store": true
+    },
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}",
+        "${env:THEOS}/include",
+        "${env:THEOS}/vendor/include",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include"
+    ],
+    "C_Cpp.default.defines": [
+        "__OBJC__",
+        "__IPHONE_OS_VERSION_MIN_REQUIRED=150000"
+    ],
+    "editor.formatOnSave": false,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "files.trimTrailingWhitespace": true,
+    "terminal.integrated.env.osx": {
+        "THEOS": "${env:THEOS}"
+    },
+    "todo-tree.general.tags": [
+        "TODO",
+        "FIXME",
+        "HACK",
+        "XXX",
+        "NOTE",
+        "MARK"
+    ],
+    "todo-tree.highlights.defaultHighlight": {
+        "icon": "alert",
+        "type": "text",
+        "foreground": "#ffffff",
+        "background": "#ff0000",
+        "opacity": 50
+    }
+}

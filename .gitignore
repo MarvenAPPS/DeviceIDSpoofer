@@ -4,6 +4,12 @@ packages/
 *.deb
 .debmake/
 
+# Build Output
+output/
+*.dylib
+*.a
+*.o
+
 # Xcode
 build/
 *.pbxuser
@@ -40,9 +46,16 @@ Icon
 
 # IDE
 .vscode/
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
 *.sublime-project
 *.sublime-workspace
 
 # Logs
 *.log
+
+# Debug symbols
+*.dSYM/

@@ -1,0 +1,193 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🔨 Build: LiveContainer Dylib",
+            "type": "shell",
+            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "clear": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "📦 Build: Jailbreak Tweak (.deb)",
+            "type": "shell",
+            "command": "make clean package",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "clear": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "🚀 Build & Copy: LiveContainer (Output)",
+            "type": "shell",
+            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && mkdir -p output && cp .theos/obj/debug/libDeviceIDSpoofer.dylib output/ && strip -x output/libDeviceIDSpoofer.dylib && echo '✅ Dylib copied to output/libDeviceIDSpoofer.dylib'",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "clear": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "📦 Build & Copy: Jailbreak (.deb to Output)",
+            "type": "shell",
+            "command": "make clean package && mkdir -p output && cp packages/*.deb output/ && echo '✅ Package copied to output/'",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "clear": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "🧹 Clean: All Build Artifacts",
+            "type": "shell",
+            "command": "make clean && make -f Makefile.livecontainer clean && rm -rf output && echo '✅ Clean complete'",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "🔍 Info: Show Dylib Details",
+            "type": "shell",
+            "command": "echo '📊 Dylib Information:' && echo '' && file .theos/obj/debug/libDeviceIDSpoofer.dylib && echo '' && ls -lh .theos/obj/debug/libDeviceIDSpoofer.dylib && echo '' && otool -L .theos/obj/debug/libDeviceIDSpoofer.dylib",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "📤 Deploy: Copy to Device (SSH)",
+            "type": "shell",
+            "command": "echo 'Enter device IP:' && read DEVICE_IP && scp .theos/obj/debug/libDeviceIDSpoofer.dylib root@$DEVICE_IP:/var/root/ && echo '✅ Dylib copied to device at /var/root/'",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "🎯 Build All: Dylib + Tweak",
+            "type": "shell",
+            "command": "echo '🔨 Building LiveContainer Dylib...' && make -f Makefile.livecontainer clean && make -f Makefile.livecontainer FINALPACKAGE=1 && echo '' && echo '📦 Building Jailbreak Tweak...' && make clean package && echo '' && mkdir -p output && cp .theos/obj/debug/libDeviceIDSpoofer.dylib output/ && strip -x output/libDeviceIDSpoofer.dylib && cp packages/*.deb output/ && echo '✅ All builds complete! Files in output/' && ls -lh output/",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "clear": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "⚡ Quick Build: LiveContainer (No Clean)",
+            "type": "shell",
+            "command": "make -f Makefile.livecontainer FINALPACKAGE=1",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "🔧 Debug: Build with Symbols",
+            "type": "shell",
+            "command": "make -f Makefile.livecontainer clean && make -f Makefile.livecontainer DEBUG=1",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "clear": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "📋 Copy: Output to Desktop",
+            "type": "shell",
+            "command": "mkdir -p ~/Desktop/DeviceIDSpoofer && cp output/* ~/Desktop/DeviceIDSpoofer/ 2>/dev/null && echo '✅ Files copied to Desktop/DeviceIDSpoofer/' || echo '⚠️  No files in output/ folder. Build first!'",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "📊 Analyze: Dylib Size Comparison",
+            "type": "shell",
+            "command": "echo '📊 Size Analysis:' && echo '' && echo 'With Debug Symbols:' && ls -lh .theos/obj/debug/libDeviceIDSpoofer.dylib 2>/dev/null || echo 'Not built yet' && echo '' && echo 'Stripped (if exists):' && ls -lh output/libDeviceIDSpoofer.dylib 2>/dev/null || echo 'Not built yet' && echo '' && echo 'Architectures:' && lipo -info .theos/obj/debug/libDeviceIDSpoofer.dylib 2>/dev/null || echo 'Not built yet'",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "🔐 Sign: Code Sign Dylib",
+            "type": "shell",
+            "command": "codesign -s - -f .theos/obj/debug/libDeviceIDSpoofer.dylib && echo '✅ Dylib signed' && codesign -dv .theos/obj/debug/libDeviceIDSpoofer.dylib",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "📁 Open: Output Folder",
+            "type": "shell",
+            "command": "mkdir -p output && open output",
+            "group": "test",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "osx": {
+                "command": "mkdir -p output && open output"
+            },
+            "linux": {
+                "command": "mkdir -p output && xdg-open output"
+            }
+        },
+        {
+            "label": "🎬 Watch: Auto-rebuild on File Change",
+            "type": "shell",
+            "command": "while true; do fswatch -1 *.x *.m *.h && echo '🔄 File changed, rebuilding...' && make -f Makefile.livecontainer FINALPACKAGE=1; done",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

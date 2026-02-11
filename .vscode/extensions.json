@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "vadimcn.vscode-lldb",
+        "gruntfuggly.todo-tree",
+        "usernamehw.errorlens",
+        "eamodio.gitlens",
+        "ms-vscode.makefile-tools"
+    ]
+}
