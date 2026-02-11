@@ -4,9 +4,11 @@
 @interface FloatingWindow () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) UIButton *floatingButton;
+@property (nonatomic, strong) UILabel *debugLabel;
 @property (nonatomic, strong) DeviceIDManager *deviceIDManager;
 @property (nonatomic, strong) UIManager *uiManager;
 @property (nonatomic, assign) CGPoint lastTouchPoint;
+@property (nonatomic, assign) NSInteger tapCount;
 
 @end
 
@@ -19,6 +21,7 @@
     if (self) {
         _deviceIDManager = manager;
         _uiManager = [[UIManager alloc] initWithDeviceIDManager:manager];
+        _tapCount = 0;
         
         // Window configuration
         self.windowLevel = UIWindowLevelAlert + 100;
@@ -30,6 +33,7 @@
         self.rootViewController = rootVC;
         
         [self setupFloatingButton];
+        [self setupDebugLabel];
     }
     
     return self;
@@ -47,19 +51,22 @@
         buttonSize
     );
     
-    // Style the button
-    self.floatingButton.backgroundColor = [UIColor colorWithRed:0.2 green:0.6 blue:1.0 alpha:0.9];
+    // Style the button with BRIGHT color to make it obvious
+    self.floatingButton.backgroundColor = [UIColor colorWithRed:1.0 green:0.3 blue:0.3 alpha:1.0]; // Bright red
     self.floatingButton.layer.cornerRadius = buttonSize / 2;
     self.floatingButton.layer.shadowColor = [UIColor blackColor].CGColor;
-    self.floatingButton.layer.shadowOffset = CGSizeMake(0, 2);
-    self.floatingButton.layer.shadowRadius = 4;
-    self.floatingButton.layer.shadowOpacity = 0.3;
+    self.floatingButton.layer.shadowOffset = CGSizeMake(0, 4);
+    self.floatingButton.layer.shadowRadius = 8;
+    self.floatingButton.layer.shadowOpacity = 0.5;
+    self.floatingButton.layer.borderWidth = 3;
+    self.floatingButton.layer.borderColor = [UIColor whiteColor].CGColor;
     
     // Add icon
     UILabel *iconLabel = [[UILabel alloc] initWithFrame:self.floatingButton.bounds];
-    iconLabel.text = @"ID";
+    iconLabel.text = @"TAP\nME";
+    iconLabel.numberOfLines = 2;
     iconLabel.textColor = [UIColor whiteColor];
-    iconLabel.font = [UIFont boldSystemFontOfSize:18];
+    iconLabel.font = [UIFont boldSystemFontOfSize:14];
     iconLabel.textAlignment = NSTextAlignmentCenter;
     iconLabel.userInteractionEnabled = NO;
     [self.floatingButton addSubview:iconLabel];
@@ -74,7 +81,21 @@
     
     [self.rootViewController.view addSubview:self.floatingButton];
     
-    NSLog(@"[FloatingWindow] Button setup complete at: %@", NSStringFromCGRect(self.floatingButton.frame));
+    NSLog(@"[FloatingWindow] 🔴 RED BUTTON created at: %@", NSStringFromCGRect(self.floatingButton.frame));
+}
+
+- (void)setupDebugLabel {
+    // Debug label to show tap count
+    self.debugLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 50, 200, 40)];
+    self.debugLabel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.7];
+    self.debugLabel.textColor = [UIColor greenColor];
+    self.debugLabel.font = [UIFont boldSystemFontOfSize:16];
+    self.debugLabel.textAlignment = NSTextAlignmentCenter;
+    self.debugLabel.text = @"Taps: 0";
+    self.debugLabel.layer.cornerRadius = 8;
+    self.debugLabel.clipsToBounds = YES;
+    self.debugLabel.userInteractionEnabled = NO;
+    [self.rootViewController.view addSubview:self.debugLabel];
 }
 
 - (void)handlePan:(UIPanGestureRecognizer *)gesture {
@@ -82,7 +103,11 @@
     
     if (gesture.state == UIGestureRecognizerStateBegan) {
         self.lastTouchPoint = self.floatingButton.center;
-        NSLog(@"[FloatingWindow] Pan began");
+        NSLog(@"[FloatingWindow] 🔵 Pan began");
+        
+        // Visual feedback for drag
+        self.floatingButton.backgroundColor = [UIColor colorWithRed:0.2 green:0.6 blue:1.0 alpha:1.0]; // Blue while dragging
+        
     } else if (gesture.state == UIGestureRecognizerStateChanged) {
         CGPoint newCenter = CGPointMake(
             self.lastTouchPoint.x + translation.x,
@@ -95,8 +120,10 @@
         newCenter.y = MAX(buttonRadius, MIN(self.bounds.size.height - buttonRadius, newCenter.y));
         
         self.floatingButton.center = newCenter;
+        
     } else if (gesture.state == UIGestureRecognizerStateEnded) {
-        NSLog(@"[FloatingWindow] Pan ended");
+        NSLog(@"[FloatingWindow] 🔵 Pan ended");
+        self.floatingButton.backgroundColor = [UIColor colorWithRed:1.0 green:0.3 blue:0.3 alpha:1.0]; // Back to red
         [self snapToNearestEdge];
     }
 }
@@ -117,56 +144,76 @@
 }
 
 - (void)floatingButtonTapped {
-    NSLog(@"[FloatingWindow] ✅ Button tapped!");
+    self.tapCount++;
+    NSLog(@"[FloatingWindow] ✅✅✅ BUTTON TAPPED! Count: %ld", (long)self.tapCount);
+    
+    // Update debug label
+    self.debugLabel.text = [NSString stringWithFormat:@"Taps: %ld", (long)self.tapCount];
+    
+    // VISUAL FEEDBACK - Flash bright green
+    UIColor *originalColor = self.floatingButton.backgroundColor;
+    self.floatingButton.backgroundColor = [UIColor colorWithRed:0.2 green:1.0 blue:0.3 alpha:1.0]; // Bright green
     
     // Haptic feedback
-    UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+    UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
     [feedback impactOccurred];
     
-    // Animate tap
-    [UIView animateWithDuration:0.1 animations:^{
-        self.floatingButton.transform = CGAffineTransformMakeScale(0.9, 0.9);
+    // Animate - flash and scale
+    [UIView animateWithDuration:0.15 animations:^{
+        self.floatingButton.transform = CGAffineTransformMakeScale(1.2, 1.2);
     } completion:^(BOOL finished) {
-        [UIView animateWithDuration:0.1 animations:^{
+        [UIView animateWithDuration:0.15 animations:^{
             self.floatingButton.transform = CGAffineTransformIdentity;
+            self.floatingButton.backgroundColor = originalColor;
         }];
     }];
     
-    [self.uiManager showMenuFromWindow:self];
+    // Show menu after visual feedback
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self.uiManager showMenuFromWindow:self];
+    });
 }
 
 - (void)show {
     self.hidden = NO;
     
-    // Make window visible and key (important for touch events)
+    // Make window visible and key
     [self makeKeyAndVisible];
+    
+    NSLog(@"[FloatingWindow] 🟢 Window shown - makeKeyAndVisible called");
+    NSLog(@"[FloatingWindow] Window level: %f", (double)self.windowLevel);
+    NSLog(@"[FloatingWindow] Is key window: %@", self.isKeyWindow ? @"YES" : @"NO");
     
     // Animate button appearance
     self.floatingButton.transform = CGAffineTransformMakeScale(0.1, 0.1);
     self.floatingButton.alpha = 0;
+    self.debugLabel.alpha = 0;
     
-    [UIView animateWithDuration:0.3 delay:0 usingSpringWithDamping:0.6 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseOut animations:^{
+    [UIView animateWithDuration:0.5 delay:0 usingSpringWithDamping:0.6 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseOut animations:^{
         self.floatingButton.transform = CGAffineTransformIdentity;
         self.floatingButton.alpha = 1.0;
+        self.debugLabel.alpha = 1.0;
     } completion:^(BOOL finished) {
-        NSLog(@"[FloatingWindow] Window shown and ready for touches");
+        NSLog(@"[FloatingWindow] ✅ Button animation complete and ready");
     }];
 }
 
 - (void)hide {
     [UIView animateWithDuration:0.2 animations:^{
         self.floatingButton.alpha = 0;
+        self.debugLabel.alpha = 0;
     } completion:^(BOOL finished) {
         self.hidden = YES;
     }];
 }
 
-#pragma mark - Touch Handling (CRITICAL)
+#pragma mark - Touch Handling
 
-// This is the KEY method - it determines what receives touches
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    // If window is hidden or interaction disabled, pass through
+    NSLog(@"[FloatingWindow] 🔍 hitTest called at point: %@", NSStringFromCGPoint(point));
+    
     if (self.hidden || !self.userInteractionEnabled) {
+        NSLog(@"[FloatingWindow] ❌ Window hidden or disabled");
         return nil;
     }
     
@@ -174,19 +221,16 @@
     CGPoint pointInButton = [self.floatingButton convertPoint:point fromView:self];
     
     if ([self.floatingButton pointInside:pointInButton withEvent:event]) {
-        NSLog(@"[FloatingWindow] ✅ Touch detected on button at: %@", NSStringFromCGPoint(point));
-        // Return the button - it will handle the touch
+        NSLog(@"[FloatingWindow] ✅✅ TOUCH ON BUTTON DETECTED!");
         return self.floatingButton;
     }
     
-    // Touch is outside button - pass through to app behind
-    NSLog(@"[FloatingWindow] Touch passed through at: %@", NSStringFromCGPoint(point));
+    NSLog(@"[FloatingWindow] ⚪ Touch passed through");
     return nil;
 }
 
-// Gesture recognizer delegate - allow simultaneous recognition
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
-    return NO; // Don't allow simultaneous - button should capture exclusively
+    return NO;
 }
 
 @end
