@@ -1,412 +1,141 @@
-# DeviceIDSpoofer
+# Device ID Spoofer
 
-<div align="center">
+🎯 **Simple, fast IDFV spoofing with 10 predefined profiles**
 
-**Injectable iOS Dylib for Device ID Spoofing**
+## Features
 
-[![iOS](https://img.shields.io/badge/iOS-15.0+-blue.svg)](https://www.apple.com/ios/)
-[![Architecture](https://img.shields.io/badge/arch-arm64%20%7C%20arm64e-green.svg)](https://developer.apple.com/documentation/apple-silicon)
-[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+- 🎮 **10 Predefined Profiles** - Gaming, Social, Finance, Shopping, Media, Work, Testing, Privacy, Development, Default
+- ⚡ **One-Tap Switching** - Tap floating button to cycle through profiles
+- 🔄 **Auto-Disable** - After 10 taps (all profiles), returns to disabled state
+- 💾 **Persistent State** - Remembers current profile across app restarts
+- 📊 **Visual Feedback** - Shows profile name and IDFV in toast notification
+- 🎨 **Status Indicator** - Button shows "OFF" or "P1"-"P10"
 
-*Hook and spoof all iOS device unique identifiers with an intuitive floating UI*
+## How It Works
 
-</div>
+### Profile Cycling
 
----
+1. **Initial State**: Disabled (Gray button, "OFF")
+2. **Tap 1**: Profile 1 - Gaming (Blue button, "P1")
+3. **Tap 2**: Profile 2 - Social (Blue button, "P2")
+4. **...**
+5. **Tap 10**: Profile 10 - Default (Blue button, "P10")
+6. **Tap 11**: Back to Disabled (Gray button, "OFF")
 
-## 🔥 Features
+### Visual States
 
-- **🎯 Floating Button UI**: Draggable, non-intrusive interface accessible from any app
-- **🔑 Complete ID Coverage**: Hooks all major device identifiers
-  - IDFV (Identifier For Vendor)
-  - IDFA (Advertising Identifier)
-  - UDID (Unique Device ID)
-  - Serial Number
-  - WiFi MAC Address
-  - Bluetooth MAC Address
-  - Device Name, Model, Product Type
-  - System Version, Region Info
-- **⚡ Real-time Toggle**: Enable/disable spoofing on-the-fly
-- **🎲 Random Generation**: One-tap random ID generation
-- **✏️ Custom Values**: Manually set any identifier to specific values
-- **💾 Persistent Storage**: Settings saved across app launches
-- **🎯 MobileGestalt Hooks**: Low-level system hooks for maximum coverage
+- 🔴 **Disabled**: Gray button with "OFF" label
+- 🔵 **Active Profile**: Blue button with "P1" through "P10" label
+- 🎨 **Toast Notification**: Shows profile name + first 8 chars of IDFV
 
----
+## Profiles
 
-## 📸 Screenshots
+| # | Profile Name | IDFV |
+|---|-------------|------|
+| 1 | Gaming | `12345678-AAAA-BBBB-CCCC-111111111111` |
+| 2 | Social | `87654321-BBBB-CCCC-DDDD-222222222222` |
+| 3 | Finance | `ABCDEFAB-CCCC-DDDD-EEEE-333333333333` |
+| 4 | Shopping | `FEDCBAFE-DDDD-EEEE-FFFF-444444444444` |
+| 5 | Media | `11111111-EEEE-FFFF-0000-555555555555` |
+| 6 | Work | `22222222-FFFF-0000-1111-666666666666` |
+| 7 | Testing | `33333333-0000-1111-2222-777777777777` |
+| 8 | Privacy | `44444444-1111-2222-3333-888888888888` |
+| 9 | Development | `55555555-2222-3333-4444-999999999999` |
+| 10 | Default | `66666666-3333-4444-5555-AAAAAAAAAAAA` |
 
-### Floating Button
-A draggable floating button that snaps to screen edges for easy access.
+## Installation
 
-### Menu Interface
-Clean, intuitive interface showing all device identifiers with current values.
-
----
-
-## 🛠️ Installation
-
-### Prerequisites
-
-1. **Jailbroken iOS Device** (iOS 15.0 or higher)
-2. **Theos** installed on your development machine
-3. **SSH access** to your device
-4. **Basic knowledge** of iOS tweak development
-
-### Option 1: Build from Source
+### Build & Install
 
 ```bash
-# Clone the repository
-git clone https://github.com/MarvenAPPS/DeviceIDSpoofer.git
 cd DeviceIDSpoofer
-
-# Set your device IP (or use make do if configured)
-export THEOS_DEVICE_IP=YOUR_DEVICE_IP
-
-# Build and install
 make clean package install
-
-# Respring your device
-killall -9 SpringBoard
 ```
 
-### Option 2: Install Pre-built Package
+### Requirements
+
+- iOS 14.0+
+- Theos installed
+- Jailbroken device or LiveContainer
+
+## Usage
+
+1. **Launch app** - Floating button appears automatically
+2. **Tap button** - Cycles to next profile
+3. **Check toast** - See current profile name and IDFV
+4. **Drag button** - Move anywhere on screen
+5. **Keep tapping** - After 10 taps, returns to disabled
+
+## Technical Details
+
+### Hook Mechanism
+
+- **Target Method**: `[UIDevice identifierForVendor]`
+- **Hook Type**: Logos `%hook` with `%orig` fallback
+- **Return Value**: `NSUUID` object with spoofed or original IDFV
+
+### State Management
+
+- **Storage**: `NSUserDefaults`
+- **Keys**: `CurrentProfileIndex` (-1 to 9), `DeviceIDSpoofingEnabled`
+- **Persistence**: Survives app restarts and resprings
+
+### Components
+
+- **Tweak.x**: IDFV hook and initialization
+- **DeviceIDManager**: Profile data and state management
+- **FloatingButton**: UI and user interaction
+- **UIManager**: Advanced menu (optional, for future use)
+
+## Logs
+
+Monitor with:
 
 ```bash
-# Download the .deb file from Releases
-# Transfer to your device and install
-ssh root@YOUR_DEVICE_IP
-dpkg -i com.marvenapps.deviceidspoofer_1.0.0_iphoneos-arm.deb
-killall -9 SpringBoard
+tail -f /var/log/syslog | grep DeviceIDSpoofer
 ```
 
----
+You'll see:
 
-## 🚀 Usage
+```
+[DeviceIDSpoofer] 🟢 Switched to profile 1: Profile 1: Gaming -> 12345678
+[DeviceIDSpoofer] 🔄 IDFV HOOKED: 12345678-AAAA-BBBB-CCCC-111111111111 (Profile 1: Gaming)
+[DeviceIDSpoofer] 🟢 Switched to profile 2: Profile 2: Social -> 87654321
+...
+[DeviceIDSpoofer] 🔴 Profile cycling complete - DISABLED
+[DeviceIDSpoofer] ➡️ IDFV ORIGINAL: [original-uuid]
+```
 
-### Basic Operation
+## Customization
 
-1. **Launch any app** - The floating button appears after 2 seconds
-2. **Tap the button** - Opens the Device ID Spoofer menu
-3. **Enable spoofing** - Toggle the master switch
-4. **Generate IDs** - Tap "Generate" for random values
-5. **Custom values** - Tap any ID to set a custom value
-6. **Reset** - Tap "Reset" to restore original device IDs
+To add your own profiles, edit `DeviceIDManager.m`:
 
-### Advanced Features
-
-#### Moving the Floating Button
-- **Long press and drag** to reposition
-- **Automatically snaps** to nearest screen edge
-- **Persists position** across app launches
-
-#### Editing Individual IDs
-1. Tap any identifier in the list
-2. Enter your custom value
-3. Tap "Save"
-4. Changes take effect immediately
-
-#### Bulk Operations
-- **Generate**: Creates completely random IDs for all fields
-- **Reset**: Clears all custom values and disables spoofing
-
----
-
-## 📚 Technical Details
-
-### Hooked APIs
-
-#### UIDevice (UIKit)
 ```objc
-- identifierForVendor
-- name
-- model
-- systemVersion
+profiles = @{
+    @"Profile 1: Your Name": @"YOUR-UUID-HERE",
+    @"Profile 2: Another Name": @"ANOTHER-UUID-HERE",
+    // ...
+};
 ```
 
-#### ASIdentifierManager (AdSupport)
-```objc
-- advertisingIdentifier
-- isAdvertisingTrackingEnabled
-```
-
-#### MobileGestalt (Private Framework)
-```c
-MGCopyAnswer() with keys:
-- SerialNumber
-- UniqueDeviceID
-- WifiAddress
-- BluetoothAddress
-- ProductType
-- RegionInfo
-```
-
-### Architecture
-
-```
-┌───────────────────────┐
-│   FloatingWindow.m    │
-│  (UI Entry Point)     │
-└─────────┬────────────┘
-         │
-         │ User Interaction
-         │
-┌────────┴────────┐
-│   UIManager.m    │
-│ (Menu & Controls) │
-└────────┬────────┘
-         │
-         │ State Management
-         │
-┌────────┴───────────────┐
-│  DeviceIDManager.m   │
-│  (ID Generation &    │
-│   Persistence)       │
-└────────┬───────────────┘
-         │
-         │ Provides Spoofed Values
-         │
-┌────────┴──────────────┐
-│      Tweak.x        │
-│ (Method Swizzling & │
-│  Function Hooking)  │
-└────────┬──────────────┘
-         │
-         │ Intercepts
-         │
-┌────────┴──────────────┐
-│   System APIs     │
-│  UIDevice, ASIM,  │
-│  MobileGestalt    │
-└───────────────────────┘
-```
-
-### File Structure
-
-```
-DeviceIDSpoofer/
-├── Tweak.x                  # Main hooks and constructor
-├── DeviceIDManager.h/m      # ID management logic
-├── FloatingWindow.h/m       # Floating button UI
-├── UIManager.h/m            # Menu interface
-├── Makefile                 # Build configuration
-├── control                  # Package metadata
-└── README.md                # This file
-```
-
----
-
-## ⚙️ Configuration
-
-### Preferences File
-
-Settings are stored in:
-```
-/var/mobile/Library/Preferences/com.marvenapps.deviceidspoofer.plist
-```
-
-### Preferences Structure
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>isEnabled</key>
-    <true/>
-    <key>customIDFV</key>
-    <string>XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</string>
-    <key>customIDFA</key>
-    <string>XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</string>
-    <!-- Additional keys... -->
-</dict>
-</plist>
-```
-
----
-
-## 🛡️ Privacy & Security
-
-### ⚠️ Important Notes
-
-- **Educational Purpose**: This tool is for research and testing only
-- **Responsible Use**: Do not use for malicious purposes or to violate ToS
-- **Detection Risk**: Some apps may detect modified device IDs
-- **App Store**: Works only on jailbroken devices
-
-### Best Practices
-
-1. **Test in sandbox**: Use with test accounts first
-2. **Consistent IDs**: Keep generated IDs consistent per app
-3. **Realistic values**: Use plausible device configurations
-4. **Disable when not needed**: Toggle off to reduce detection risk
-
----
-
-## 🐛 Troubleshooting
-
-### Floating Button Not Appearing
+Generate UUIDs with:
 
 ```bash
-# Check if tweak is loaded
-ps aux | grep DeviceIDSpoofer
-
-# Check logs
-log stream --predicate 'process == "SpringBoard"' | grep DeviceID
-
-# Reinstall
-make clean package install
-killall -9 SpringBoard
+uuidgen
 ```
 
-### IDs Not Being Spoofed
+## Roadmap
 
-1. Ensure master switch is **enabled**
-2. Check that custom values are **set**
-3. Verify app is **not in blacklist**
-4. Try **restarting the app**
+- [ ] IDFA spoofing support
+- [ ] Custom profile editor via UI
+- [ ] Import/export profile configurations
+- [ ] Per-app profile selection
+- [ ] UDID, Serial Number, MAC address spoofing
 
-### Build Errors
+## License
 
-```bash
-# Update Theos
-$THEOS/bin/update-theos
+MIT License - Use freely!
 
-# Clean build
-make clean
+## Author
 
-# Check Theos installation
-echo $THEOS
-```
-
----
-
-## 📝 Logging
-
-Enable detailed logging:
-
-```bash
-# View live logs
-log stream --predicate 'subsystem == "com.marvenapps.deviceidspoofer"' --level debug
-
-# Or use Console.app on macOS
-# Filter: process:SpringBoard AND message:DeviceID
-```
-
----
-
-## 🔧 Development
-
-### Building for Development
-
-```bash
-# Development build with symbols
-make clean
-make DEBUG=1 package install
-
-# Watch logs
-make install && log stream --predicate 'process == "SpringBoard"' | grep DeviceID
-```
-
-### Adding New Hooks
-
-1. Edit `Tweak.x`
-2. Add hook using Logos syntax
-3. Update `DeviceIDManager` with new properties
-4. Update UI in `UIManager.m`
-5. Rebuild and test
-
-### Testing
-
-```bash
-# Test specific app
-open -b com.example.app
-
-# Monitor hooks
-log stream --predicate 'process == "YourApp"' | grep DeviceID
-```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/AmazingFeature`)
-3. **Commit** your changes (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** to the branch (`git push origin feature/AmazingFeature`)
-5. **Open** a Pull Request
-
-### Code Style
-
-- Follow **Apple's Objective-C conventions**
-- Use **ARC** (Automatic Reference Counting)
-- Add **comments** for complex logic
-- Test on **multiple iOS versions**
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## ⚠️ Disclaimer
-
-**FOR EDUCATIONAL AND RESEARCH PURPOSES ONLY**
-
-This tool is provided as-is for educational purposes. The authors are not responsible for any misuse or damage caused by this software. Use at your own risk and comply with all applicable laws and terms of service.
-
----
-
-## 🚀 Roadmap
-
-- [ ] Add app-specific ID profiles
-- [ ] Import/Export configurations
-- [ ] Scheduled ID rotation
-- [ ] Blacklist/Whitelist apps
-- [ ] Dark mode support
-- [ ] Landscape mode optimization
-- [ ] Preferences panel in Settings.app
-- [ ] Remote configuration via web panel
-
----
-
-## 💬 Support
-
-For issues, questions, or suggestions:
-
-- **GitHub Issues**: [Report a bug](https://github.com/MarvenAPPS/DeviceIDSpoofer/issues)
-- **Discussions**: [Ask a question](https://github.com/MarvenAPPS/DeviceIDSpoofer/discussions)
-
----
-
-## 🌟 Acknowledgments
-
-- **Theos** - iOS tweak development framework
-- **Cydia Substrate** - Runtime patching engine
-- **iOS Reverse Engineering Community** - Knowledge and inspiration
-
----
-
-## 📊 Version History
-
-### v1.0.0 (Current)
-- Initial release
-- Floating button UI
-- All major device ID hooks
-- Random generation
-- Custom value support
-- Persistent storage
-
----
-
-<div align="center">
-
-**Made with ❤️ by [MarvenAPPS](https://github.com/MarvenAPPS)**
-
-If you find this useful, consider giving it a ⭐️
-
-</div>
+Marven - [@MarvenAPPS](https://github.com/MarvenAPPS)
