@@ -117,10 +117,12 @@ static NSDictionary *profiles = nil;
     _isEnabled = [defaults boolForKey:kEnabledKey];
     _currentProfileIndex = [defaults integerForKey:kCurrentProfileKey];
     
-    // If never set, default to disabled (-1)
+    // If never set, default to Profile 1 (Gaming) - ENABLED
     if (![defaults objectForKey:kCurrentProfileKey]) {
-        _currentProfileIndex = -1;
-        _isEnabled = NO;
+        _currentProfileIndex = 0;  // Profile 1
+        _isEnabled = YES;          // Enabled by default
+        [self saveSettings];       // Save this default immediately
+        NSLog(@"[DeviceIDManager] 🟢 First launch - Profile 1 ENABLED by default");
     }
     
     NSLog(@"[DeviceIDManager] 📂 Settings loaded - Profile: %ld, Enabled: %@", 
